@@ -1,0 +1,96 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("RECRUITER") // "ADMIN" | "RECRUITER"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  jobs         Job[]
+}
+
+model Job {
+  id                    String        @id @default(uuid())
+  title                 String
+  description           String
+  department            String?
+  location              String?
+  employmentType        String        // e.g. Full-time, Part-time, Contract
+  requiredSkills        String        // Serialized array of skill names
+  experienceYears       Int
+  educationRequirements String
+  status                String        @default("OPEN") // "OPEN" | "CLOSED"
+  createdById           String
+  createdBy             User          @relation(fields: [createdById], references: [id])
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  applications          Application[]
+}
+
+model Candidate {
+  id             String        @id @default(uuid())
+  name           String
+  email          String?
+  phone          String?
+  location       String?
+  skills         String        // Serialized array of skills
+  experience     String        // Serialized array of experience objects
+  education      String        // Serialized array of education objects
+  certifications String        // Serialized array of certifications
+  projects       String?       // Serialized array of project objects
+  languages      String        // Serialized array of languages
+  resumePath     String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  applications   Application[]
+}
+
+model Application {
+  id                 String              @id @default(uuid())
+  candidateId        String
+  candidate          Candidate           @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId              String
+  job                Job                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status             String              @default("APPLIED") // "APPLIED" | "REVIEW" | "SHORTLISTED" | "REJECTED"
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  score              Score?
+  interviewQuestions InterviewQuestions?
+}
+
+model Score {
+  id                      String      @id @default(uuid())
+  applicationId           String      @unique
+  application             Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  skillMatchScore         Float       // 0-100
+  experienceMatchScore    Float       // 0-100
+  educationMatchScore     Float       // 0-100
+  certificationMatchScore Float       // 0-100
+  finalScore              Float       // (skill * 0.4) + (experience * 0.3) + (education * 0.2) + (certification * 0.1)
+  fitCategory             String      // Excellent Fit (90-100), Shortlisted (75-89), Review (50-74), Rejected (0-49)
+  summary                 String
+  strengths               String        // Serialized array of strengths
+  weaknesses              String        // Serialized array of weaknesses
+  missingSkills           String        // Serialized array of missing skills
+  hiringRecommendation    String
+  createdAt               DateTime    @default(now())
+}
+
+model InterviewQuestions {
+  id                  String      @id @default(uuid())
+  applicationId       String      @unique
+  application         Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  technicalQuestions  String      // Serialized array of strings
+  behavioralQuestions String      // Serialized array of strings
+  scenarioQuestions   String      // Serialized array of strings
+  createdAt           DateTime    @default(now())
+}
