@@ -6,7 +6,9 @@ node_modules/
 # Next.js Build Output
 /frontend/.next/
 /frontend/out/
+/backend/dist/
 *.tsbuildinfo
+
 
 # SQLite Database & Prisma Schema files
 /backend/prisma/dev.db
